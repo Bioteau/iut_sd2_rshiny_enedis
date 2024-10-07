@@ -1,0 +1,145 @@
+---
+title: "Rapport d'étude de Consommation énergétique"
+author: "Bouteaud Clovis"
+output:
+  pdf_document:
+    fig_caption: yes
+    toc: yes
+    toc_depth: 2
+  html_document:
+    fig_caption: yes
+    toc: yes
+    toc_depth: 2
+  word_document:
+    fig_caption: yes
+    toc: yes
+    toc_depth: 2
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+# Charger les packages nécessaires
+library(ggplot2)
+library(dplyr)
+library(knitr)
+
+# Charger les données
+setwd("C:\\Users\\Clovis\\OneDrive\\Bureau\\SD\\Projet R\\Dataset")
+data <- read.csv("DATA.csv", sep=",", dec=".")
+
+# Sélection de code postal et type de bâtiment
+code_postal_selected <- "1230" # Modifier selon vos besoins
+type_selected <- "Existant"  # "Neuf", "Existant" ou c("Neuf","Existant")
+```
+
+
+# Introduction
+L'objectif de ce rapport est de fournir une analyse détaillée de la consommation énergétique des bâtiments en fonction de plusieurs critères. Nous explorerons les indicateurs clés de performance (KPI), les relations entre différentes variables (statistiques bivariées) et illustrerons les résultats avec des graphiques pertinents. De plus, il sera possible d'effectuer une analyse personnalisée en fonction d'un code postal et du type de bâtiment.
+
+
+
+# 1. Indicateurs Clés de Performance (KPI)
+Les indicateurs suivants donnent une vue d'ensemble de la consommation énergétique. Ils permettent d'avoir un aperçu des moyennes globales ainsi que du nombre total de bâtiments inclus dans cette analyse.
+
+```{r echo=FALSE, out.width='75%'}
+# Sélectionner les données pour le code postal choisi
+kpi_data <- data %>%
+  filter(Code_postal_.BAN. == code_postal_selected & Type == type_selected) %>%
+  summarise(
+    "Consommation moyenne" = mean(Conso_5_usages_é_finale, na.rm = TRUE),
+    "Nombre de logements" = n()
+  )
+
+# Afficher les KPI dans un tableau
+kable(kpi_data, caption = "KPI des Consommations Énergétiques")
+```
+
+# 2. Visualisations Graphiques
+Les graphiques ci-dessous permettent de visualiser la répartition des consommations énergétiques selon différentes variables.
+
+## 2.1 Boîte à Moustaches par Étiquette DPE
+
+Le graphique suivant montre la distribution de la consommation énergétique en fonction de l'étiquette DPE.
+
+```{r echo=FALSE, out.width='75%',fig.align = "center"}
+# Filtrer les données pour le graphique de boîte à moustaches
+filtered_data_boxplot <- data %>% filter(Code_postal_.BAN. == code_postal_selected & Type == type_selected) %>%
+  filter(!is.na(Etiquette_DPE), !is.na(Conso_5_usages_é_finale))
+
+# Boîte à moustaches par étiquette DPE
+ggplot(filtered_data_boxplot, aes(x = Etiquette_DPE, y = Conso_5_usages_é_finale)) +
+  geom_boxplot() +
+  labs(title = paste("Boîte à Moustaches par Étiquette DPE du", 
+                     code_postal_selected, "des bâtiments\n", type_selected), x = "Étiquette DPE", y = "Consommation (kWh)") +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14) # Centrer le titre et ajuster la taille
+  )
+```
+
+
+## 2.2 Nuage de Points : Consommation en Fonction du Type de Bâtiment
+Le nuage de points ci-dessous montre la relation entre le type de bâtiment et la consommation énergétique, avec une distinction par étiquette DPE.
+
+```{r echo=FALSE, out.width='75%',fig.align = "center"}
+# Filtrer les données pour éviter les valeurs non finies
+filtered_data_points <- data %>% filter(Code_postal_.BAN. == code_postal_selected & Type == type_selected) %>%
+  filter(!is.na(Conso_5_usages_é_finale), !is.na(Type_bâtiment), !is.na(Etiquette_DPE))
+
+# Nuage de points entre type de bâtiment et consommation
+ggplot(filtered_data_points, aes(x = Type_bâtiment, y = Conso_5_usages_é_finale, color = Etiquette_DPE)) +
+  geom_point(alpha = 0.7, size = 3) +
+  labs(title = paste("Relation entre Type de Bâtiment etConsommation Énergétique \ndu", 
+                     code_postal_selected, "des bâtiments", type_selected), 
+       x = "Type de Bâtiment", y = "Consommation (kWh)") +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14) # Centrer le titre et ajuster la taille
+  )
+```
+
+## 2.3 Histogramme de la Consommation
+Ce graphique présente la répartition des consommations énergétiques à travers tous les bâtiments.
+
+```{r echo=FALSE, out.width='75%',fig.align = "center"}
+# Filtrer les données pour la courbe de densité
+filtered_data_hist <- data %>% filter(Code_postal_.BAN. == code_postal_selected & Type == type_selected) %>%
+  filter(!is.na(Conso_5_usages_é_finale))
+
+# Courbe de densité de la consommation énergétique
+ggplot(filtered_data_hist, aes(x = Conso_5_usages_é_finale)) +
+  geom_density(fill = "darkgreen", alpha = 0.7) +
+  labs(title = paste("Répartition de la Consommation Énergétique du", 
+                     code_postal_selected, "des \nbâtiments", type_selected), 
+       x = "Consommation (kWh)", y = "Densité") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14) # Centrer le titre et ajuster la taille
+  )
+```
+
+# 3. Analyse Personnalisée
+Dans cette section, vous pouvez filtrer l'analyse en sélectionnant un code postal et un type de bâtiment (ancien, neuf ou tous). Cela permet d'affiner l'analyse et de visualiser les données correspondant à des critères spécifiques.
+
+```{r echo=FALSE, out.width='75%',fig.align = "center"}
+
+# Filtrer les données en fonction du code postal et du type de bâtiment
+filtered_data <- data %>%
+  filter(Code_postal_.BAN. == code_postal_selected & 
+         (Type == type_selected))
+
+# Afficher un graphique basé sur les données filtrées
+ggplot(filtered_data, aes(x = Etiquette_DPE, y = Conso_5_usages_é_finale)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = paste("Consommation Moyenne des bâtiments", type_selected, "dans le", code_postal_selected), 
+       x = "Étiquette DPE", y = "Consommation (kWh)") +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14) # Centrer le titre et ajuster la taille
+  )
+```
+
+# Conclusion
+Ce rapport a mis en lumière plusieurs aspects clés de la consommation énergétique des bâtiments. Grâce aux indicateurs clés de performance, à l'analyse bivariée et aux graphiques, nous avons pu explorer les différences de consommation en fonction de l'étiquette DPE et du type de bâtiment. De plus, la section personnalisée permet de filtrer l'analyse par code postal et type de logement, offrant une vue détaillée sur des zones spécifiques.
+
+Nous espérons que ces informations vous fourniront des insights utiles pour comprendre la répartition de la consommation énergétique.
