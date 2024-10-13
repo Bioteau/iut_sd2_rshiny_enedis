@@ -18,4 +18,4 @@ Ou sinon passer par le lien envoyé par mail pour accéder a l'application herbe
 Rapport d'étude R-Markdown en pdf et en .Rmd afin de pouvoir changer le type de logement (neuf/existant ou les deux) et changer le code postal souhaité.
 Et deux autres rendu demandé en pdf, une documentation fonctionnelle et une technique qui présente principalement les packages utilisé et l'interet de chaque page de l'application.
 
-# Merci d'avoir lu
+# Merci d'avoir lu.
